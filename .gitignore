@@ -1,0 +1,14 @@
+/target/
+/dist/
+/assets/app_res.o
+*.lnk
+*.log
+.env
+.env.*
+/config.json
+/webdav.json
+/studio-session.json
+/applied.json
+/icons/
+/uploads/
+/snapshots/

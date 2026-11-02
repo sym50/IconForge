@@ -1,0 +1,65 @@
+[package]
+name = "iconforge"
+version = "1.7.0"
+edition = "2021"
+description = "IconForge core: iOS-style Windows icon pipeline (superellipse mask, base plates, iTunes CN+US source, snapshots)"
+license = "MIT"
+
+[lib]
+name = "iconforge"
+path = "src/lib.rs"
+
+[[bin]]
+name = "iconforge"
+path = "src/main.rs"
+
+[dependencies]
+image = "0.25"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# HTTP via reqwest blocking + native-tls (system TLS stack: OpenSSL on
+# Linux, SChannel on Windows). Deliberately NOT rustls: rustls rejects
+# connections whose peer closes without close_notify, which
+# TLS-intercepting proxies do; the system stack tolerates it, like curl.
+# And NOT ureq: ureq 2.12 sends absolute-form request lines
+# (`GET https://...`) even inside a CONNECT tunnel, which MITM proxies
+# reject; reqwest/hyper correctly sends origin-form (`GET /`).
+reqwest = { version = "0.12", default-features = false, features = [
+    "blocking",
+    "json",
+    "native-tls",
+] }
+anyhow = "1"
+# Minimal blocking HTTP server for the local Web UI (single exe, no WebView).
+tiny_http = "0.12"
+base64 = "0.22"
+
+# Windows-only deps (one table): native GUI (egui + glow/OpenGL, no
+# browser, no WebView) + native file picker + COM (.lnk) via `windows`.
+# (windows-sys 0.61 does NOT contain IShellLinkW / IPersistFile at all,
+# so it cannot do .lnk work.)
+[target.'cfg(windows)'.dependencies]
+eframe = { version = "0.37", default-features = false, features = [
+    "glow",
+    "default_fonts",
+    "clipboard",
+] }
+# eframe re-exports egui, but `use egui::...` needs it as a direct dep.
+egui = "0.37"
+rfd = "0.15"
+windows = { version = "0.62", features = [
+    "Win32_Foundation",
+    "Win32_System_Com",
+    "Win32_System_Console",
+    "Win32_System_Registry",
+    "Win32_Security_Cryptography",
+    "Win32_UI_Shell",
+    "Win32_UI_Shell_Common",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_Graphics_Gdi",
+    "Win32_Storage_FileSystem",
+] }
+
+[profile.release]
+opt-level = 2
+strip = "symbols"
