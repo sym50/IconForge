@@ -1,0 +1,4 @@
+Lucide 0.468.0
+https://unpkg.com/lucide-static@0.468.0/
+https://lucide.dev/
+Vendored SVGs are build-time sources; generated egui outlines require no runtime dependency.
