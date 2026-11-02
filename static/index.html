@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IconForge 图标工坊</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.5 "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background: #14171c; color: #e8eaed; }
+  header { display: flex; gap: 12px; align-items: center; padding: 10px 16px; background: #1c2027; border-bottom: 1px solid #2c313a; position: sticky; top: 0; z-index: 10; }
+  header h1 { font-size: 18px; margin: 0; }
+  header h1 span { color: #8ab4ff; font-size: 12px; font-weight: normal; margin-left: 6px; }
+  select, input[type=text], input[type=password] { background: #262b33; color: #e8eaed; border: 1px solid #3a404b; border-radius: 6px; padding: 6px 10px; font: inherit; }
+  button { background: #2b6ff2; color: #fff; border: 0; border-radius: 6px; padding: 7px 14px; cursor: pointer; font: inherit; }
+  button:hover { background: #3d7dff; }
+  button.ghost { background: #262b33; color: #e8eaed; border: 1px solid #3a404b; }
+  button.ghost:hover { background: #333a44; }
+  button.danger { background: #b3261e; }
+  button:disabled { opacity: .5; cursor: default; }
+  .spacer { flex: 1; }
+  main { display: grid; grid-template-columns: 1fr 380px; gap: 0; height: calc(100vh - 53px); }
+  #list { overflow-y: auto; padding: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
+  .card { background: #1c2027; border: 1px solid #2c313a; border-radius: 10px; padding: 12px 8px 10px; text-align: center; cursor: pointer; position: relative; }
+  .card:hover { border-color: #4a5568; }
+  .card.sel { border-color: #2b6ff2; box-shadow: 0 0 0 1px #2b6ff2; }
+  .card img { width: 64px; height: 64px; border-radius: 14px; object-fit: cover; }
+  .card .name { margin-top: 8px; font-size: 13px; word-break: break-all; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .badge { position: absolute; top: 6px; right: 6px; font-size: 11px; padding: 1px 6px; border-radius: 10px; }
+  .badge.decided { background: #1e4d2b; color: #8ce99a; }
+  .badge.applied { background: #1e3a5f; color: #8ab4ff; }
+  .badge.uwp { background: #5f3a1e; color: #ffc078; }
+  .badge.excluded { background: #3a3a3a; color: #aaa; }
+  #detail { border-left: 1px solid #2c313a; padding: 14px; overflow-y: auto; background: #171a20; }
+  #detail h2 { font-size: 16px; margin: 0 0 10px; }
+  .preview { display: flex; gap: 14px; justify-content: center; margin: 12px 0; }
+  .preview figure { margin: 0; text-align: center; }
+  .preview img { width: 128px; height: 128px; border-radius: 28px; background: #262b33; }
+  .preview figcaption { font-size: 12px; color: #9aa0a6; margin-top: 4px; }
+  .tabs { display: flex; gap: 6px; margin: 12px 0 8px; }
+  .tab { background: #262b33; border: 1px solid #3a404b; }
+  .tab:hover { background: #333a44; }
+  .tab.active { background: #2b6ff2; border-color: transparent; }
+  .tab.active:hover { background: #3d7dff; }
+  .row { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+  .row label { min-width: 52px; color: #9aa0a6; }
+  .cand { display: flex; gap: 10px; align-items: center; padding: 7px; border: 1px solid #2c313a; border-radius: 8px; cursor: pointer; margin: 5px 0; }
+  .cand:hover { border-color: #4a5568; }
+  .cand.sel { border-color: #2b6ff2; }
+  .cand img { width: 48px; height: 48px; border-radius: 11px; }
+  .cand .meta { flex: 1; min-width: 0; }
+  .cand .meta b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cand .meta span { font-size: 12px; color: #9aa0a6; }
+  .hint { font-size: 12px; color: #9aa0a6; }
+  .ai-box { background: #1c2027; border: 1px solid #2c313a; border-radius: 8px; padding: 10px; margin: 10px 0; font-size: 13px; }
+  .ai-box b { color: #8ce99a; }
+  #toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: #2b6ff2; color: #fff; padding: 9px 18px; border-radius: 8px; display: none; z-index: 50; max-width: 80vw; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 40; }
+  .modal.open { display: flex; }
+  .modal .box { background: #1c2027; border: 1px solid #2c313a; border-radius: 12px; padding: 20px; width: 480px; max-height: 80vh; overflow-y: auto; }
+  .modal .box h3 { margin: 0 0 12px; }
+  .snap { display: flex; gap: 10px; align-items: center; padding: 8px; border: 1px solid #2c313a; border-radius: 8px; margin: 6px 0; }
+  .snap span { flex: 1; }
+  .empty { color: #9aa0a6; text-align: center; padding: 40px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>IconForge <span>图标工坊 · 桌面图标 iOS 化</span></h1>
+  <select id="folderSel"></select>
+  <input type="text" id="filter" placeholder="筛选名称…" style="width:160px">
+  <div class="spacer"></div>
+  <button id="applyAllBtn" class="ghost">应用全部已决策</button>
+  <button id="snapBtn" class="ghost">快照 / 撤销</button>
+</header>
+<main>
+  <div id="list"><div class="grid" id="grid"></div><div class="empty" id="emptyMsg" style="display:none">这个文件夹没有快捷方式</div></div>
+  <div id="detail">
+    <div id="noSel" class="empty">从左侧选一个快捷方式开始</div>
+    <div id="selPanel" style="display:none">
+      <h2 id="selName"></h2>
+      <div class="preview">
+        <figure><img id="beforeImg" alt="改前"><figcaption>改前</figcaption></figure>
+        <figure><img id="afterImg" alt="改后"><figcaption>改后预览</figcaption></figure>
+      </div>
+      <div class="row"><label>底板</label>
+        <select id="baseSel"><option value="white">白底</option><option value="pick">取色</option></select>
+      </div>
+      <div class="tabs">
+        <button class="tab active" data-tab="itunes">iTunes 搜索</button>
+        <button class="tab" data-tab="current">当前图标兜底</button>
+        <button class="tab" data-tab="file">本地文件</button>
+      </div>
+      <div id="tab-itunes">
+        <div class="row"><input type="text" id="searchInput" placeholder="搜 App 名，如 微信" style="flex:1"><button id="searchBtn">搜索</button></div>
+        <div id="cands"></div>
+      </div>
+      <div id="tab-current" style="display:none">
+        <p class="hint">用当前图标的字形套底板（特征兜底）。搜不到官方图标时用这个。</p>
+        <button id="currentBtn" class="ghost">用当前图标预览</button>
+      </div>
+      <div id="tab-file" style="display:none">
+        <p class="hint">选择本地 PNG / 图标图（官网 logo、照片等）。照片会走仅遮罩分支。</p>
+        <input type="file" id="fileInput" accept="image/*">
+      </div>
+      <div class="row" style="margin-top:14px">
+        <button id="applyOneBtn">应用此图标</button>
+        <button id="excludeBtn" class="ghost">排除</button>
+      </div>
+      <p class="hint" id="detailHint"></p>
+    </div>
+  </div>
+</main>
+<div id="toast"></div>
+
+<div class="modal" id="snapModal"><div class="box">
+  <h3>快照 / 撤销</h3>
+  <p class="hint">每次应用前自动创建快照，记录原始图标位置。还原会把图标指回原位置。</p>
+  <div id="snapList"></div>
+  <div class="row"><button class="ghost" id="closeSnapBtn">关闭</button></div>
+</div></div>
+
+<script>
+const $ = id => document.getElementById(id);
+let MOCK = false;
+let shortcuts = [], selected = null, decisions = {}, applied = {}, excluded = new Set();
+let curSource = null, curTab = 'itunes', curCands = [];
+
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 3500); }
+async function api(path, body) {
+  const r = await fetch(path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {});
+  return r.json();
+}
+
+async function loadFolders() {
+  const d = await api('/api/folders');
+  const sel = $('folderSel');
+  sel.innerHTML = '';
+  (d.folders || []).forEach(f => { const o = document.createElement('option'); o.value = f.path; o.textContent = f.name; sel.appendChild(o); });
+  if ((d.folders || []).length === 0) { MOCK = true; const o = document.createElement('option'); o.value = ''; o.textContent = '演示数据（非 Windows 演示）'; sel.appendChild(o); }
+  sel.onchange = loadShortcuts;
+  loadShortcuts();
+}
+
+async function loadShortcuts() {
+  const folder = $('folderSel').value;
+  const d = await api('/api/shortcuts?folder=' + encodeURIComponent(folder) + (MOCK ? '&mock=1' : ''));
+  shortcuts = d.shortcuts || [];
+  renderGrid();
+}
+
+function renderGrid() {
+  const q = $('filter').value.trim().toLowerCase();
+  const grid = $('grid'); grid.innerHTML = '';
+  const list = shortcuts.filter(s => !q || s.name.toLowerCase().includes(q));
+  $('emptyMsg').style.display = list.length ? 'none' : 'block';
+  list.forEach(s => {
+    const el = document.createElement('div');
+    el.className = 'card' + (selected && selected.path === s.path ? ' sel' : '');
+    let badge = '';
+    if (excluded.has(s.path)) badge = '<span class="badge excluded">已排除</span>';
+    else if (applied[s.path]) badge = '<span class="badge applied">已应用</span>';
+    else if (decisions[s.path]) badge = '<span class="badge decided">已决策</span>';
+    else if (s.kind === 'uwp') badge = '<span class="badge uwp">UWP</span>';
+    el.innerHTML = '<img src="' + s.icon_url + '" onerror="this.style.opacity=.3">' + badge + '<div class="name">' + esc(s.name) + '</div>';
+    el.onclick = () => select(s);
+    grid.appendChild(el);
+  });
+}
+
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+async function select(s) {
+  selected = s; curSource = null; curCands = [];
+  $('noSel').style.display = 'none'; $('selPanel').style.display = 'block';
+  $('selName').textContent = s.name;
+  $('beforeImg').src = s.icon_url;
+  $('afterImg').src = s.icon_url;
+  $('searchInput').value = s.name;
+  $('cands').innerHTML = ''; $('detailHint').textContent = '';
+  if (s.kind === 'uwp') $('detailHint').textContent = 'UWP 快捷方式：图标不可替换、不可还原，已禁用应用。';
+  renderGrid();
+  if (s.kind !== 'uwp') { curSource = { type: 'current' }; doPreview(); }
+}
+
+async function doPreview() {
+  if (!selected || !curSource) return;
+  const d = await api('/api/preview', { lnk_path: selected.path, source: curSource, base: $('baseSel').value, mock: MOCK });
+  if (d.ok) { $('afterImg').src = 'data:image/png;base64,' + d.png_b64; $('detailHint').textContent = '分支：' + d.branch; }
+  else toast(d.error || '预览失败');
+}
+
+async function searchItunes() {
+  const q = $('searchInput').value.trim();
+  if (!q) return;
+  $('cands').innerHTML = '<p class="hint">搜索中…</p>';
+  const d = await api('/api/search?query=' + encodeURIComponent(q));
+  if (!d.ok) { $('cands').innerHTML = '<p class="hint">' + esc(d.error || '搜索失败') + '</p>'; return; }
+  curCands = d.candidates || [];
+  if (!curCands.length) { $('cands').innerHTML = '<p class="hint">双区均无结果，建议用“当前图标兜底”或本地文件。</p>'; return; }
+  $('cands').innerHTML = '';
+  curCands.forEach((c, i) => {
+    const el = document.createElement('div');
+    el.className = 'cand';
+    const art = c.artwork_url.replace('512x512', '128x128');
+    el.innerHTML = '<img src="' + esc(art) + '" onerror="this.style.opacity=.3"><div class="meta"><b>' + esc(c.track_name) + '</b><span>' + esc(c.artist_name) + ' · ' + esc(c.version || '') + ' · ' + esc((c.countries || []).join('+')) + ' · ' + esc(c.kind) + '</span></div>';
+    el.onclick = () => {
+      document.querySelectorAll('.cand').forEach(x => x.classList.remove('sel'));
+      el.classList.add('sel');
+      curSource = { type: 'itunes', artwork_url: c.artwork_url.replace('512x512', '1024x1024'), bundle_id: c.bundle_id };
+      doPreview();
+    };
+    $('cands').appendChild(el);
+  });
+}
+
+async function applyItems(items) {
+  const d = await api('/api/apply', { items, mock: MOCK });
+  let ok = 0, fail = 0;
+  (d.results || []).forEach(r => {
+    if (r.ok) { ok++; applied[r.lnk_path] = true; } else { fail++; toast((r.lnk_path.split('\\').pop() || r.lnk_path) + '：' + (r.error || '失败')); }
+  });
+  if (ok) toast('已应用 ' + ok + ' 个' + (d.snapshot_id ? '，快照 ' + d.snapshot_id : ''));
+  if (!ok && !fail) toast('没有可应用的项');
+  renderGrid();
+}
+
+$('filter').oninput = renderGrid;
+$('folderSel').onchange = loadShortcuts;
+$('searchBtn').onclick = searchItunes;
+$('searchInput').onkeydown = e => { if (e.key === 'Enter') searchItunes(); };
+$('currentBtn').onclick = () => { curSource = { type: 'current' }; doPreview(); };
+$('baseSel').onchange = doPreview;
+$('fileInput').onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = async () => {
+    const b64 = String(r.result).split(',')[1] || '';
+    const d = await api('/api/upload', { name: f.name, b64 });
+    if (!d.ok) { toast(d.error || '上传失败'); return; }
+    curSource = { type: 'file', path: d.path };
+    doPreview();
+  };
+  r.readAsDataURL(f);
+};
+document.querySelectorAll('.tab').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  b.classList.add('active'); curTab = b.dataset.tab;
+  ['itunes', 'current', 'file'].forEach(t => $('tab-' + t).style.display = t === curTab ? 'block' : 'none');
+});
+$('applyOneBtn').onclick = () => {
+  if (!selected || !curSource) { toast('先选一个来源'); return; }
+  if (selected.kind === 'uwp') { toast('UWP 快捷方式不可替换'); return; }
+  decisions[selected.path] = { source: curSource, base: $('baseSel').value };
+  applyItems([{ lnk_path: selected.path, source: curSource, base: $('baseSel').value }]);
+};
+$('excludeBtn').onclick = () => { if (selected) { excluded.add(selected.path); renderGrid(); toast('已排除 ' + selected.name); } };
+$('applyAllBtn').onclick = () => {
+  const items = shortcuts.filter(s => decisions[s.path] && !excluded.has(s.path) && s.kind !== 'uwp')
+    .map(s => ({ lnk_path: s.path, source: decisions[s.path].source, base: decisions[s.path].base }));
+  if (!items.length) { toast('没有已决策的项：先点进快捷方式选来源'); return; }
+  applyItems(items);
+};
+$('snapBtn').onclick = async () => {
+  const d = await api('/api/snapshots');
+  const list = $('snapList');
+  list.innerHTML = (d.snapshots || []).length ? '' : '<p class="hint">暂无快照</p>';
+  (d.snapshots || []).forEach(s => {
+    const el = document.createElement('div'); el.className = 'snap';
+    el.innerHTML = '<span>' + esc(s.id) + '（' + s.count + ' 项）</span>';
+    const b = document.createElement('button'); b.className = 'ghost'; b.textContent = '还原';
+    b.onclick = async () => { const r = await api('/api/restore', { id: s.id }); toast(r.ok ? '还原完成' : (r.error || '还原失败')); };
+    el.appendChild(b); list.appendChild(el);
+  });
+  $('snapModal').classList.add('open');
+};
+$('closeSnapBtn').onclick = () => $('snapModal').classList.remove('open');
+document.querySelectorAll('.modal').forEach(m => m.onclick = e => { if (e.target === m) m.classList.remove('open'); });
+
+loadFolders();
+</script>
+</body>
+</html>
